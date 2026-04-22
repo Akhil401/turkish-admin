@@ -14,53 +14,36 @@ import Chat from './Chat';
 function App() {
   const saveOneSignalToken = async (userId) => {
     try {
-      const savedToken = localStorage.getItem('onesignal_user_id');
+      if (window.OneSignal) {
+        window.OneSignal.push(async function () {
+          // Show native prompt
+          window.OneSignal.showNativePrompt();
 
-      if (!savedToken) {
-        // Request permission if not already granted
-        if (window.OneSignal) {
-          window.OneSignal.push(function () {
-            window.OneSignal.Notifications.requestPermission(async (accepted) => {
-              if (accepted) {
-                window.OneSignal.getUserId(async function (playerId) {
-                  console.log('OneSignal User ID:', playerId);
-                  localStorage.setItem('onesignal_user_id', playerId);
+          // Wait a bit for user to respond, then get ID
+          setTimeout(async () => {
+            window.OneSignal.getUserId(async function (playerId) {
+              if (playerId) {
+                console.log('OneSignal User ID:', playerId);
+                localStorage.setItem('onesignal_user_id', playerId);
 
-                  const { error } = await supabase
-                    .from('one_signal_tokens')
-                    .upsert({
-                      user_id: userId,
-                      player_id: playerId
-                    }, {
-                      onConflict: 'user_id'
-                    });
+                const { error } = await supabase
+                  .from('one_signal_tokens')
+                  .upsert({
+                    user_id: userId,
+                    player_id: playerId
+                  }, {
+                    onConflict: 'user_id'
+                  });
 
-                  if (error) {
-                    console.error('Error saving OneSignal token:', error);
-                  } else {
-                    console.log('OneSignal token saved to database');
-                  }
-                });
+                if (error) {
+                  console.error('Error saving OneSignal token:', error);
+                } else {
+                  console.log('OneSignal token saved to database');
+                }
               }
             });
-          });
-        }
-      } else {
-        // Ensure the saved token is in the database
-        const { error } = await supabase
-          .from('one_signal_tokens')
-          .upsert({
-            user_id: userId,
-            player_id: savedToken
-          }, {
-            onConflict: 'user_id'
-          });
-
-        if (error) {
-          console.error('Error saving OneSignal token:', error);
-        } else {
-          console.log('OneSignal token saved to database');
-        }
+          }, 2000);
+        });
       }
     } catch (e) {
       console.error('Error in saveOneSignalToken:', e);
@@ -92,9 +75,6 @@ function App() {
                   },
                 ],
               },
-            },
-            notificationPrompt: {
-              autoPrompt: true,
             },
           });
         });
