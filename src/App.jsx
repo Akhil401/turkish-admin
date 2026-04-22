@@ -12,6 +12,61 @@ import UserList from './UserList';
 import Chat from './Chat';
 
 function App() {
+  const saveOneSignalToken = async (userId) => {
+    try {
+      const savedToken = localStorage.getItem('onesignal_user_id');
+
+      if (!savedToken) {
+        // Request permission if not already granted
+        if (window.OneSignal) {
+          window.OneSignal.push(function () {
+            window.OneSignal.Notifications.requestPermission(async (accepted) => {
+              if (accepted) {
+                window.OneSignal.getUserId(async function (playerId) {
+                  console.log('OneSignal User ID:', playerId);
+                  localStorage.setItem('onesignal_user_id', playerId);
+
+                  const { error } = await supabase
+                    .from('one_signal_tokens')
+                    .upsert({
+                      user_id: userId,
+                      player_id: playerId
+                    }, {
+                      onConflict: 'user_id'
+                    });
+
+                  if (error) {
+                    console.error('Error saving OneSignal token:', error);
+                  } else {
+                    console.log('OneSignal token saved to database');
+                  }
+                });
+              }
+            });
+          });
+        }
+      } else {
+        // Ensure the saved token is in the database
+        const { error } = await supabase
+          .from('one_signal_tokens')
+          .upsert({
+            user_id: userId,
+            player_id: savedToken
+          }, {
+            onConflict: 'user_id'
+          });
+
+        if (error) {
+          console.error('Error saving OneSignal token:', error);
+        } else {
+          console.log('OneSignal token saved to database');
+        }
+      }
+    } catch (e) {
+      console.error('Error in saveOneSignalToken:', e);
+    }
+  };
+
   useEffect(() => {
     const initOneSignal = async () => {
       if (typeof window !== 'undefined' && window.OneSignal) {
@@ -75,10 +130,25 @@ function App() {
             }
           });
         });
+
+        // Also check on initialization
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          saveOneSignalToken(user.id);
+        }
       }
     };
 
     initOneSignal();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        saveOneSignalToken(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
   return (
     <Router>
