@@ -42,6 +42,14 @@ async function subscribeToPush(userId) {
       return;
     }
 
+    // Unsubscribe from any existing subscription (e.g. old OneSignal subscription)
+    // This is required when the applicationServerKey (VAPID key) has changed
+    const existingSubscription = await registration.pushManager.getSubscription();
+    if (existingSubscription) {
+      await existingSubscription.unsubscribe();
+      console.log('🔄 Unsubscribed from old push subscription');
+    }
+
     // Subscribe using native PushManager with our VAPID key
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
