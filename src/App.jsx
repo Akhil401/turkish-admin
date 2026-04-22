@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
+import { supabase } from './supabaseClient';
 import PrivateRoute from './PrivateRoute';
 import Login from './Login';
 import Layout from './Layout';
@@ -44,12 +45,32 @@ function App() {
         });
 
         window.OneSignal.push(function () {
-          window.OneSignal.on('subscriptionChange', function (isSubscribed) {
+          window.OneSignal.on('subscriptionChange', async function (isSubscribed) {
             console.log('The user subscription state is now:', isSubscribed);
             if (isSubscribed) {
-              window.OneSignal.getUserId(function (userId) {
+              window.OneSignal.getUserId(async function (userId) {
                 console.log('OneSignal User ID:', userId);
                 localStorage.setItem('onesignal_user_id', userId);
+
+                // Get current user from Supabase
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                  // Save to one_signal_tokens table
+                  const { error } = await supabase
+                    .from('one_signal_tokens')
+                    .upsert({
+                      user_id: user.id,
+                      player_id: userId
+                    }, {
+                      onConflict: 'user_id'
+                    });
+
+                  if (error) {
+                    console.error('Error saving OneSignal token:', error);
+                  } else {
+                    console.log('OneSignal token saved to database');
+                  }
+                }
               });
             }
           });
