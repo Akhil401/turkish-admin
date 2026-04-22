@@ -18,16 +18,10 @@ serve(async (req) => {
     console.log('Webhook payload received:', JSON.stringify(payload));
 
     const record = payload.record;
+    const table = payload.table;
+
     if (!record) {
       return new Response('No record in payload', { status: 200 });
-    }
-
-    const receiverId = record.receiver_id;
-    const senderId = record.sender_id;
-    const content = record.content || 'You have a new message.';
-
-    if (!receiverId) {
-      return new Response('No receiver_id', { status: 200 });
     }
 
     const supabase = createClient(
@@ -35,19 +29,46 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Look up the receiver's push subscription
+    let title = '';
+    let body = '';
+    let url = 'https://turkish-admin.pages.dev/';
+    let targetUserId = record.receiver_id;
+
+    if (table === 'messages') {
+      title = '💬 New Message';
+      body = record.content || 'You have a new message.';
+      url = `https://turkish-admin.pages.dev/chat?userId=${record.sender_id}`;
+    } else if (table === 'orders') {
+      title = '🍕 New Order Received!';
+      body = `Order #${record.id.slice(-6).toUpperCase()} - Total: $${record.total_amount}`;
+      url = 'https://turkish-admin.pages.dev/orders';
+      
+      // For orders, we find the first available push subscription (admin)
+      if (!targetUserId) {
+        const { data: adminSub } = await supabase
+          .from('push_subscriptions')
+          .select('user_id')
+          .limit(1)
+          .single();
+        targetUserId = adminSub?.user_id;
+      }
+    }
+
+    if (!targetUserId) {
+      return new Response('No target user found for notification', { status: 200 });
+    }
+
+    // Look up the push subscription
     const { data: subData, error: subError } = await supabase
       .from('push_subscriptions')
       .select('endpoint, p256dh, auth')
-      .eq('user_id', receiverId)
+      .eq('user_id', targetUserId)
       .single();
 
     if (subError || !subData?.endpoint) {
-      console.log('No push subscription found for receiver:', receiverId, subError);
-      return new Response('No push subscription for receiver', { status: 200 });
+      console.log('No push subscription found for user:', targetUserId);
+      return new Response('No push subscription found', { status: 200 });
     }
-
-    console.log('Sending push to endpoint:', subData.endpoint);
 
     // Configure VAPID
     webpush.setVapidDetails(
@@ -64,15 +85,11 @@ serve(async (req) => {
       },
     };
 
-    const notificationPayload = JSON.stringify({
-      title: '💬 New Message',
-      body: content,
-      url: `https://turkish-admin.pages.dev/chat?userId=${senderId}`,
-    });
+    const notificationPayload = JSON.stringify({ title, body, url });
 
     await webpush.sendNotification(pushSubscription, notificationPayload);
 
-    console.log('✅ Push notification sent successfully');
+    console.log(`✅ Push notification sent successfully for ${table}`);
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
