@@ -22,6 +22,24 @@ function App() {
               enable: true,
             },
             allowLocalhostAsSecureOrigin: true,
+            promptOptions: {
+              slidedown: {
+                prompts: [
+                  {
+                    type: "push",
+                    autoPrompt: true,
+                    text: {
+                      actionMessage: "We'd like to show you notifications for new orders and messages",
+                      acceptButton: "Allow",
+                      cancelButton: "No thanks",
+                    },
+                  },
+                ],
+              },
+            },
+            notificationPrompt: {
+              autoPrompt: true,
+            },
           });
         });
 
