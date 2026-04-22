@@ -20,20 +20,51 @@ function App() {
         window.OneSignalDeferred.push(async function (OneSignal) {
           console.log('OneSignal is available (v16)');
 
-          // Show native prompt
-          await OneSignal.Notifications.requestPermission();
+          // Request permission first
+          const granted = await OneSignal.Notifications.requestPermission();
+          console.log('Push permission granted:', granted);
+          if (!granted) {
+            console.warn('Push permission denied by user');
+            return;
+          }
 
-          // Get the subscription ID
-          const subscription = await OneSignal.User.pushSubscription;
-          if (subscription && subscription.id) {
-            console.log('OneSignal Subscription ID:', subscription.id);
-            localStorage.setItem('onesignal_user_id', subscription.id);
+          // In OneSignal v16, the subscription ID is created ASYNCHRONOUSLY
+          // after permission is granted. We must wait for the 'change' event.
+          const subscriptionId = await new Promise((resolve) => {
+            // Check if already available (e.g. returning user)
+            const existingId = OneSignal.User.pushSubscription.id;
+            if (existingId) {
+              console.log('Subscription already exists:', existingId);
+              resolve(existingId);
+              return;
+            }
+
+            // Listen for the subscription to be created
+            const handler = (event) => {
+              const newId = event.current?.id;
+              if (newId) {
+                OneSignal.User.pushSubscription.removeEventListener('change', handler);
+                resolve(newId);
+              }
+            };
+            OneSignal.User.pushSubscription.addEventListener('change', handler);
+
+            // Timeout after 15 seconds to avoid hanging
+            setTimeout(() => {
+              OneSignal.User.pushSubscription.removeEventListener('change', handler);
+              resolve(null);
+            }, 15000);
+          });
+
+          if (subscriptionId) {
+            console.log('OneSignal Subscription ID:', subscriptionId);
+            localStorage.setItem('onesignal_user_id', subscriptionId);
 
             const { error } = await supabase
               .from('one_signal_tokens')
               .upsert({
                 user_id: userId,
-                player_id: subscription.id
+                player_id: subscriptionId
               }, {
                 onConflict: 'user_id'
               });
@@ -41,10 +72,10 @@ function App() {
             if (error) {
               console.error('Error saving OneSignal token:', error);
             } else {
-              console.log('OneSignal token saved to database');
+              console.log('✅ OneSignal token saved to database successfully');
             }
           } else {
-            console.log('No OneSignal Subscription ID returned');
+            console.error('OneSignal Subscription ID not available after 15s timeout');
           }
         });
       } else {
