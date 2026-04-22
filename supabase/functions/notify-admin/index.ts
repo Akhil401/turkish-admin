@@ -1,5 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// @ts-ignore
+import webpush from 'npm:web-push@3.6.7';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,7 +17,6 @@ serve(async (req) => {
     const payload = await req.json();
     console.log('Webhook payload received:', JSON.stringify(payload));
 
-    // Supabase DB webhook sends { type, table, record, old_record }
     const record = payload.record;
     if (!record) {
       return new Response('No record in payload', { status: 200 });
@@ -29,47 +30,50 @@ serve(async (req) => {
       return new Response('No receiver_id', { status: 200 });
     }
 
-    // Create a Supabase admin client to look up the receiver's OneSignal token
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { data: tokenData, error: tokenError } = await supabase
-      .from('one_signal_tokens')
-      .select('player_id')
+    // Look up the receiver's push subscription
+    const { data: subData, error: subError } = await supabase
+      .from('push_subscriptions')
+      .select('endpoint, p256dh, auth')
       .eq('user_id', receiverId)
       .single();
 
-    if (tokenError || !tokenData?.player_id) {
-      console.log('No OneSignal token found for receiver:', receiverId, tokenError);
-      return new Response('No token found for receiver', { status: 200 });
+    if (subError || !subData?.endpoint) {
+      console.log('No push subscription found for receiver:', receiverId, subError);
+      return new Response('No push subscription for receiver', { status: 200 });
     }
 
-    console.log('Sending push to player_id:', tokenData.player_id);
+    console.log('Sending push to endpoint:', subData.endpoint);
 
-    // Send push notification via OneSignal REST API
-    const oneSignalResponse = await fetch('https://onesignal.com/api/v1/notifications', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${Deno.env.get('ONESIGNAL_REST_KEY')}`,
+    // Configure VAPID
+    webpush.setVapidDetails(
+      'mailto:admin@turkishkelleci.com',
+      Deno.env.get('VAPID_PUBLIC_KEY')!,
+      Deno.env.get('VAPID_PRIVATE_KEY')!
+    );
+
+    const pushSubscription = {
+      endpoint: subData.endpoint,
+      keys: {
+        p256dh: subData.p256dh,
+        auth: subData.auth,
       },
-      body: JSON.stringify({
-        app_id: Deno.env.get('ONESIGNAL_APP_ID'),
-        include_player_ids: [tokenData.player_id],
-        headings: { en: '💬 New Message' },
-        contents: { en: content },
-        url: `https://turkish-admin.pages.dev/chat?userId=${senderId}`,
-        // Show notification even if browser tab is open
-        web_push_topic: `chat-${senderId}`,
-      }),
+    };
+
+    const notificationPayload = JSON.stringify({
+      title: '💬 New Message',
+      body: content,
+      url: `https://turkish-admin.pages.dev/chat?userId=${senderId}`,
     });
 
-    const result = await oneSignalResponse.json();
-    console.log('OneSignal API response:', JSON.stringify(result));
+    await webpush.sendNotification(pushSubscription, notificationPayload);
 
-    return new Response(JSON.stringify(result), {
+    console.log('✅ Push notification sent successfully');
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
