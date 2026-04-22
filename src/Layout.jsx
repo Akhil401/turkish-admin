@@ -113,7 +113,7 @@ function Layout({ children }) {
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
                 console.log('Realtime Order Event:', payload);
                 playNotificationSound();
-                
+
                 const newNotif = {
                     id: `order-${payload.new.id}-${Date.now()}`,
                     type: 'order',
@@ -247,9 +247,9 @@ function Layout({ children }) {
                                 backgroundColor: 'transparent',
                             }}
                         >
-                            <img 
-                                src="https://i.imgur.com/SXiYUHr.png" 
-                                alt="Logo" 
+                            <img
+                                src="https://i.imgur.com/SXiYUHr.png"
+                                alt="Logo"
                                 className="w-full h-full object-contain"
                             />
                         </div>
@@ -279,6 +279,7 @@ function Layout({ children }) {
                             <Link
                                 key={item.path}
                                 to={item.path}
+                                onClick={() => setSidebarOpen(false)}
                                 className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
                                 style={{
                                     backgroundColor: active ? colors.primary : 'transparent',
@@ -319,9 +320,9 @@ function Layout({ children }) {
                             }}
                         >
                             {profile?.avatar_url ? (
-                                <img 
-                                    src={profile.avatar_url} 
-                                    alt="Admin Avatar" 
+                                <img
+                                    src={profile.avatar_url}
+                                    alt="Admin Avatar"
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
@@ -393,7 +394,7 @@ function Layout({ children }) {
                         <button
                             onClick={() => setShowNotifications(!showNotifications)}
                             className="p-2 rounded-xl transition-colors relative"
-                            style={{ 
+                            style={{
                                 color: showNotifications ? colors.primary : colors.textLight,
                                 backgroundColor: showNotifications ? `${colors.primary}10` : 'transparent'
                             }}
@@ -408,7 +409,7 @@ function Layout({ children }) {
                             {unreadCount > 0 && (
                                 <span
                                     className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full text-[10px] font-bold border-2"
-                                    style={{ 
+                                    style={{
                                         backgroundColor: colors.danger,
                                         color: 'white',
                                         borderColor: colors.card
@@ -422,13 +423,13 @@ function Layout({ children }) {
                         {/* Notifications Dropdown */}
                         {showNotifications && (
                             <>
-                                <div 
-                                    className="fixed inset-0 z-10" 
+                                <div
+                                    className="fixed inset-0 z-10"
                                     onClick={() => setShowNotifications(false)}
                                 />
-                                <div 
+                                <div
                                     className="absolute top-full right-0 mt-2 w-80 max-h-[480px] overflow-hidden flex flex-col z-20 rounded-2xl"
-                                    style={{ 
+                                    style={{
                                         backgroundColor: colors.card,
                                         boxShadow: shadows.xl,
                                         border: `1px solid ${colors.borderLight}`
@@ -439,7 +440,7 @@ function Layout({ children }) {
                                         <div className="flex items-center justify-between">
                                             <h3 className="font-bold" style={{ color: colors.text }}>Notifications</h3>
                                             {notifications.length > 0 && (
-                                                <button 
+                                                <button
                                                     onClick={markAllAsRead}
                                                     className="text-xs font-medium hover:underline"
                                                     style={{ color: colors.primary }}
@@ -448,16 +449,16 @@ function Layout({ children }) {
                                                 </button>
                                             )}
                                         </div>
-                                        
+
                                         {/* Big Enable Sound Button */}
-                                        <button 
+                                        <button
                                             onClick={async () => {
                                                 const ok = await initAudio();
                                                 if (ok) playNotificationSound(true);
                                                 else toast.error("Could not wake audio engine");
                                             }}
                                             className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-95"
-                                            style={{ 
+                                            style={{
                                                 backgroundColor: `${colors.primary}15`,
                                                 color: colors.primary,
                                                 border: `2px dashed ${colors.primary}40`
@@ -476,7 +477,7 @@ function Layout({ children }) {
                                             </div>
                                         ) : (
                                             notifications.map((notif) => (
-                                                <div 
+                                                <div
                                                     key={notif.id}
                                                     onClick={() => {
                                                         markAsRead(notif.id);
@@ -484,14 +485,14 @@ function Layout({ children }) {
                                                         navigate(notif.path);
                                                     }}
                                                     className="p-4 border-b last:border-0 cursor-pointer transition-colors"
-                                                    style={{ 
+                                                    style={{
                                                         borderColor: colors.borderLight,
                                                         backgroundColor: notif.read ? 'transparent' : `${colors.primary}05`
                                                     }}
                                                     onMouseEnter={(e) => e.target.style.backgroundColor = colors.background}
                                                 >
                                                     <div className="flex gap-3">
-                                                        <div 
+                                                        <div
                                                             className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
                                                             style={{ backgroundColor: notif.type === 'order' ? `${colors.success}15` : `${colors.info}15` }}
                                                         >
@@ -522,7 +523,7 @@ function Layout({ children }) {
                                     {/* Footer */}
                                     {notifications.length > 0 && (
                                         <div className="p-3 border-t text-center" style={{ borderColor: colors.borderLight }}>
-                                            <button 
+                                            <button
                                                 onClick={clearAll}
                                                 className="text-xs font-medium"
                                                 style={{ color: colors.textMuted }}
