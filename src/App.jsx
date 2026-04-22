@@ -32,10 +32,17 @@ function App() {
           // after permission is granted. We must wait for the 'change' event.
           const subscriptionId = await new Promise((resolve) => {
             // Check if already available (e.g. returning user)
-            const existingId = OneSignal.User.pushSubscription.id;
+            const existingId = OneSignal.User?.pushSubscription?.id;
             if (existingId) {
               console.log('Subscription already exists:', existingId);
               resolve(existingId);
+              return;
+            }
+
+            // pushSubscription might not be attached yet — guard against it
+            if (!OneSignal.User?.pushSubscription) {
+              console.error('OneSignal.User.pushSubscription is not available');
+              resolve(null);
               return;
             }
 
@@ -51,7 +58,7 @@ function App() {
 
             // Timeout after 15 seconds to avoid hanging
             setTimeout(() => {
-              OneSignal.User.pushSubscription.removeEventListener('change', handler);
+              OneSignal.User?.pushSubscription?.removeEventListener('change', handler);
               resolve(null);
             }, 15000);
           });
