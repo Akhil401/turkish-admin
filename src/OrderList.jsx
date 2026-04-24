@@ -178,7 +178,7 @@ function OrderList() {
         try {
             const { data, error } = await supabase
                 .from('orders')
-                .select('*, profiles!user_id(full_name, email, phone)')
+                .select('*, profiles!user_id(full_name, email, phone), driver:profiles!driver_id(full_name, phone)')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -561,6 +561,45 @@ function OrderList() {
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Delivery Info */}
+                        <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: colors.background }}>
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-semibold" style={{ color: colors.text }}>
+                                    Delivery Information
+                                </h3>
+                            </div>
+                            {selectedOrder.driver_id ? (
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm" style={{ color: colors.textMuted }}>Assigned Driver</p>
+                                        <p className="font-medium" style={{ color: colors.text }}>
+                                            {selectedOrder.driver?.full_name || 'Unknown Driver'}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => navigate(`/chat?userId=${selectedOrder.driver_id}`)}
+                                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95"
+                                        style={{
+                                            backgroundColor: colors.primary,
+                                            color: colors.textInverse,
+                                            boxShadow: shadows.md,
+                                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.primary}dd)`
+                                        }}
+                                    >
+                                        <Icons.Message />
+                                        Message Driver
+                                    </button>
+                                </div>
+                            ) : (
+                                <div>
+                                    <p className="text-sm" style={{ color: colors.textMuted }}>Assigned Driver</p>
+                                    <p className="font-medium" style={{ color: colors.status?.rejected || '#ef4444' }}>
+                                        Driver is not yet assigned
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Order Items */}
