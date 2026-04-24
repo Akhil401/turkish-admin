@@ -95,7 +95,7 @@ function Dashboard() {
         // Fetch recent orders with user details
         const { data: recent } = await supabase
           .from('orders')
-          .select('*, profiles(full_name, email)')
+          .select('*, profiles!user_id(full_name, email)')
           .order('created_at', { ascending: false })
           .limit(5);
 

@@ -31,6 +31,7 @@ export const colors = {
     placed: "#95a5a6",
     accepted: "#3498db",
     preparing: "#f39c12",
+    ready: "#2980b9",
     sent: "#9b59b6",
     delivered: "#27ae60",
     rejected: "#e74c3c",

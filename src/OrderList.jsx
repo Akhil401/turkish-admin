@@ -131,6 +131,7 @@ function OrderList() {
         { value: 'placed', label: t('placed'), color: colors.status.placed },
         { value: 'accepted', label: t('accepted'), color: colors.status.accepted },
         { value: 'preparing', label: t('preparing'), color: colors.status.preparing },
+        { value: 'ready', label: t('ready'), color: colors.status.ready },
         { value: 'sent', label: t('sent'), color: colors.status.sent },
         { value: 'delivered', label: t('delivered'), color: colors.status.delivered },
         { value: 'rejected', label: t('rejected'), color: colors.status.rejected }
@@ -171,12 +172,13 @@ function OrderList() {
         setFilteredOrders(filtered);
     }, [searchTerm, statusFilter, orders]);
 
+
     const fetchOrders = async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
                 .from('orders')
-                .select('*, profiles(full_name, email, phone)')
+                .select('*, profiles!user_id(full_name, email, phone)')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -264,6 +266,7 @@ function OrderList() {
             placed: colors.status.placed,
             accepted: colors.status.accepted,
             preparing: colors.status.preparing,
+            ready: colors.status.ready,
             sent: colors.status.sent,
             delivered: colors.status.delivered,
             rejected: colors.status.rejected
