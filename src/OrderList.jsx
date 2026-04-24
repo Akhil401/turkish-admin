@@ -116,6 +116,14 @@ const StatusDropdown = ({ orderId, currentStatus, onUpdate, statusOptions, color
     );
 };
 
+// Helper function to format address object
+const formatAddress = (address) => {
+    if (!address) return 'N/A';
+    const { address_line1, address_line2, city, state, zip_code, country } = address;
+    const parts = [address_line1, address_line2, city, state, zip_code, country].filter(Boolean);
+    return parts.join(', ');
+};
+
 function OrderList() {
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
@@ -137,15 +145,29 @@ function OrderList() {
         { value: 'rejected', label: t('rejected'), color: colors.status.rejected }
     ];
 
+    const speakOrder = (order) => {
+        if ('speechSynthesis' in window) {
+            const text = `Nuovo ordine ricevuto di ${order.total} euro!`;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'it-IT';
+            utterance.rate = 0.9; // Slightly slower for clarity
+            window.speechSynthesis.speak(utterance);
+        }
+    };
+
     useEffect(() => {
         fetchOrders();
 
         // Subscribe to realtime changes
         const subscription = supabase
             .channel('orders-channel')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
-                console.log('Order change received:', payload);
-                // Refresh orders when any change happens
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+                console.log('New order received:', payload);
+                speakOrder(payload.new);
+                fetchOrders();
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
+                console.log('Order update received:', payload);
                 fetchOrders();
             })
             .subscribe();
@@ -336,7 +358,9 @@ function OrderList() {
                 {order.address && (
                     <div className="flex items-center gap-2 text-sm" style={{ color: colors.textLight }}>
                         <Icons.MapPin />
-                        <span className="truncate">{order.address.city || t('noAddress')}</span>
+                        <span className="truncate" title={formatAddress(order.address)}>
+                            {formatAddress(order.address)}
+                        </span>
                     </div>
                 )}
             </div>
@@ -553,10 +577,10 @@ function OrderList() {
                                     </div>
                                 )}
                                 {selectedOrder.address && (
-                                    <div>
+                                    <div className="col-span-2">
                                         <p className="text-sm" style={{ color: colors.textMuted }}>{t('address')}</p>
                                         <p className="font-medium" style={{ color: colors.text }}>
-                                            {selectedOrder.address.city || 'N/A'}
+                                            {formatAddress(selectedOrder.address)}
                                         </p>
                                     </div>
                                 )}
@@ -602,6 +626,34 @@ function OrderList() {
                             )}
                         </div>
 
+                        {/* Additional Information */}
+                        <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: colors.background }}>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm" style={{ color: colors.textMuted }}>{t('paymentMethod') || 'Payment Method'}</p>
+                                    <p className="font-medium" style={{ color: colors.text }}>
+                                        {selectedOrder.payment_method === 'card' ? '💳 Card' : '💵 Cash on Delivery'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm" style={{ color: colors.textMuted }}>{t('deliverySlot') || 'Delivery Slot'}</p>
+                                    <p className="font-medium" style={{ color: colors.text }}>
+                                        {selectedOrder.delivery_time ? 
+                                            new Date(selectedOrder.delivery_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 
+                                            'ASAP'}
+                                    </p>
+                                </div>
+                                {selectedOrder.allergy_comments && (
+                                    <div className="col-span-2 mt-2 p-3 rounded-lg border-l-4 border-red-500 bg-red-50">
+                                        <p className="text-xs font-bold text-red-600 uppercase mb-1">⚠️ Allergy Comments</p>
+                                        <p className="text-sm font-medium text-red-900">
+                                            {selectedOrder.allergy_comments}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Order Items */}
                         <div className="mb-6">
                             <h3 className="font-semibold mb-4" style={{ color: colors.text }}>
@@ -626,19 +678,19 @@ function OrderList() {
                                                 </div>
                                                 <div>
                                                     <p className="font-medium" style={{ color: colors.text }}>
-                                                        {item.name}
+                                                        {item.name || item.itemName || t('unknownItem')}
                                                     </p>
                                                     <p className="text-sm" style={{ color: colors.textMuted }}>
-                                                        €{item.price?.toFixed(2)} each
+                                                        €{(item.price_at_order || item.price || 0).toFixed(2)} each
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-semibold" style={{ color: colors.text }}>
-                                                    x{item.quantity}
+                                                    x{item.quantity || 1}
                                                 </p>
                                                 <p className="text-sm font-medium" style={{ color: colors.primary }}>
-                                                    €{(item.price * item.quantity).toFixed(2)}
+                                                    €{((item.price_at_order || item.price || 0) * (item.quantity || 1)).toFixed(2)}
                                                 </p>
                                             </div>
                                         </div>

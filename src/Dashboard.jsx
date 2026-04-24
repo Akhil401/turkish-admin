@@ -49,6 +49,63 @@ function Dashboard() {
   });
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [storeSettings, setStoreSettings] = useState(null);
+
+  const [isAutoOpen, setIsAutoOpen] = useState(true);
+
+  const calculateStatus = (settings) => {
+    if (!settings) return false;
+    
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+    const timeInMins = currentHour * 60 + currentMin;
+
+    const hours = settings.opening_hours || {
+      morning: { open: "10:00", close: "15:00" },
+      evening: { open: "17:00", close: "23:00" }
+    };
+
+    const parseTime = (timeStr) => {
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    const morningOpen = parseTime(hours.morning.open);
+    const morningClose = parseTime(hours.morning.close);
+    const eveningOpen = parseTime(hours.evening.open);
+    const eveningClose = parseTime(hours.evening.close);
+
+    const isOpenNow = (timeInMins >= morningOpen && timeInMins < morningClose) || 
+                      (timeInMins >= eveningOpen && timeInMins < eveningClose);
+    
+    setIsAutoOpen(isOpenNow);
+    return isOpenNow;
+  };
+
+  useEffect(() => {
+    const fetchStoreSettings = async () => {
+      // Check current user role
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        console.log('👤 Current User Profile:', profile);
+      }
+
+      const { data } = await supabase.from('store_settings').select('*').eq('id', 'main').single();
+      if (data) {
+        setStoreSettings(data);
+        calculateStatus(data);
+      }
+    };
+    fetchStoreSettings();
+
+    const timer = setInterval(() => {
+      if (storeSettings) calculateStatus(storeSettings);
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -184,6 +241,52 @@ function Dashboard() {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
+  const toggleStoreStatus = async () => {
+    if (!storeSettings) return;
+    const newStatus = !storeSettings.is_open;
+    const { error } = await supabase
+      .from('store_settings')
+      .upsert({ 
+        id: 'main', 
+        is_open: newStatus, 
+        manual_override: true,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+    
+    if (error) {
+      console.error('Error toggling store status:', error);
+      toast.error('Failed to update store status: ' + error.message);
+    } else {
+      setStoreSettings({ ...storeSettings, is_open: newStatus, manual_override: true });
+      toast.success(newStatus ? 'Restaurant is now OPEN' : 'Restaurant is now CLOSED');
+    }
+  };
+
+  const [isEditingHours, setIsEditingHours] = useState(false);
+  const [tempHours, setTempHours] = useState({
+    morning: { open: "10:00", close: "15:00" },
+    evening: { open: "17:00", close: "23:00" }
+  });
+
+  const saveHours = async () => {
+    const { error } = await supabase
+      .from('store_settings')
+      .upsert({ 
+        id: 'main', 
+        opening_hours: tempHours,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+    
+    if (error) {
+      console.error('Error saving hours:', error);
+      toast.error('Failed to save hours: ' + error.message);
+    } else {
+      setStoreSettings({ ...storeSettings, opening_hours: tempHours });
+      setIsEditingHours(false);
+      toast.success('Opening hours updated');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -194,14 +297,160 @@ function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Edit Hours Modal */}
+      {isEditingHours && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md space-y-6">
+            <h2 className="text-xl font-bold">Edit Opening Hours</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-bold text-gray-500 block mb-2 uppercase">Morning Shift</label>
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="time" 
+                    className="flex-1 p-2 border rounded-lg"
+                    value={tempHours.morning.open}
+                    onChange={(e) => setTempHours({...tempHours, morning: {...tempHours.morning, open: e.target.value}})}
+                  />
+                  <span>to</span>
+                  <input 
+                    type="time" 
+                    className="flex-1 p-2 border rounded-lg"
+                    value={tempHours.morning.close}
+                    onChange={(e) => setTempHours({...tempHours, morning: {...tempHours.morning, close: e.target.value}})}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-gray-500 block mb-2 uppercase">Evening Shift</label>
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="time" 
+                    className="flex-1 p-2 border rounded-lg"
+                    value={tempHours.evening.open}
+                    onChange={(e) => setTempHours({...tempHours, evening: {...tempHours.evening, open: e.target.value}})}
+                  />
+                  <span>to</span>
+                  <input 
+                    type="time" 
+                    className="flex-1 p-2 border rounded-lg"
+                    value={tempHours.evening.close}
+                    onChange={(e) => setTempHours({...tempHours, evening: {...tempHours.evening, close: e.target.value}})}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button 
+                onClick={() => setIsEditingHours(false)}
+                className="flex-1 py-2 px-4 rounded-xl font-bold bg-gray-100 text-gray-600"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={saveHours}
+                className="flex-1 py-2 px-4 rounded-xl font-bold bg-orange-500 text-white shadow-lg shadow-orange-200"
+              >
+                Save Hours
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold" style={{ color: colors.text }}>
-          Dashboard
-        </h1>
-        <p style={{ color: colors.textMuted }}>
-          Welcome back! Here's what's happening today.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold" style={{ color: colors.text }}>
+            Dashboard
+          </h1>
+          <p style={{ color: colors.textMuted }}>
+            Welcome back! Here's what's happening today.
+          </p>
+        </div>
+
+        {/* Store Status Card */}
+        <div 
+          className="p-4 rounded-2xl border flex flex-col gap-3 min-w-[320px]"
+          style={{ 
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            boxShadow: shadows.md
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                  Store Status
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 font-bold text-gray-500">
+                  {storeSettings?.manual_override ? 'MANUAL' : 'SCHEDULED'}
+                </span>
+              </div>
+              <span className={`text-lg font-black ${
+                (storeSettings?.manual_override ? storeSettings.is_open : isAutoOpen) ? 'text-green-500' : 'text-red-500'
+              }`}>
+                {(storeSettings?.manual_override ? storeSettings.is_open : isAutoOpen) ? 'OPEN' : 'CLOSED'}
+              </span>
+            </div>
+            
+            {/* Standard CSS Toggle */}
+            <div className="flex flex-col items-end gap-1">
+              <label className="relative inline-block w-12 h-6 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer"
+                  checked={storeSettings?.is_open || false}
+                  onChange={toggleStoreStatus}
+                />
+                <div className="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+              </label>
+              {storeSettings?.manual_override && (
+                <button 
+                  onClick={async () => {
+                    const { error } = await supabase.from('store_settings').update({ manual_override: false }).eq('id', 'main');
+                    if (!error) {
+                      const updated = { ...storeSettings, manual_override: false };
+                      setStoreSettings(updated);
+                      calculateStatus(updated);
+                      toast.success('Switched to Auto Schedule');
+                    }
+                  }}
+                  className="text-[9px] font-bold text-blue-500 uppercase hover:underline"
+                >
+                  Reset to Auto
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-2 border-t flex flex-col gap-2" style={{ borderColor: colors.borderLight }}>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase" style={{ color: colors.textMuted }}>Opening Hours</span>
+              <button 
+                onClick={() => {
+                  if (storeSettings?.opening_hours) setTempHours(storeSettings.opening_hours);
+                  setIsEditingHours(true);
+                }}
+                className="text-[10px] font-bold text-orange-500 uppercase hover:underline"
+              >
+                Edit Hours
+              </button>
+            </div>
+            <div className="flex justify-between text-xs font-medium">
+              <span style={{ color: colors.text }}>
+                Morning: {storeSettings?.opening_hours?.morning?.open} - {storeSettings?.opening_hours?.morning?.close}
+              </span>
+              <span style={{ color: colors.text }}>
+                Evening: {storeSettings?.opening_hours?.evening?.open} - {storeSettings?.opening_hours?.evening?.close}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Stat Cards */}
