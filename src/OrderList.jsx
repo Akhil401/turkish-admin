@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { toast } from 'react-hot-toast';
@@ -134,6 +134,7 @@ function OrderList() {
     const [orderItems, setOrderItems] = useState([]);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [driverLocation, setDriverLocation] = useState(null);
 
     const statusOptions = [
         { value: 'placed', label: t('placed'), color: colors.status.placed },
@@ -281,7 +282,42 @@ function OrderList() {
         setIsDetailOpen(false);
         setSelectedOrder(null);
         setOrderItems([]);
+        setDriverLocation(null);
     };
+
+    // Subscribe to driver location updates when modal opens
+    useEffect(() => {
+        if (!isDetailOpen || !selectedOrder?.driver_id) return;
+
+        const fetchInitialDriverLocation = async () => {
+            const { data } = await supabase
+                .from('driver_locations')
+                .select('*')
+                .eq('driver_id', selectedOrder.driver_id)
+                .limit(1);
+
+            if (data && data.length > 0) {
+                setDriverLocation(data[0]);
+            }
+        };
+        fetchInitialDriverLocation();
+
+        const channel = supabase
+            .channel(`admin-tracking-${selectedOrder.driver_id}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'driver_locations',
+                filter: `driver_id=eq.${selectedOrder.driver_id}`
+            }, (payload) => {
+                setDriverLocation(payload.new);
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [isDetailOpen, selectedOrder?.driver_id]);
 
     const getStatusColor = (status) => {
         const statusColors = {
@@ -626,6 +662,60 @@ function OrderList() {
                             )}
                         </div>
 
+                        {/* Live Tracking Map */}
+                        {(selectedOrder.driver_id || selectedOrder.address) && (
+                            <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: colors.background }}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="font-semibold" style={{ color: colors.text }}>
+                                        Live Tracking
+                                    </h3>
+                                    {driverLocation && (
+                                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-600">
+                                            ● Live
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="relative rounded-lg overflow-hidden" style={{ height: '300px' }}>
+                                    <iframe
+                                        width="100%"
+                                        height="100%"
+                                        frameBorder="0"
+                                        scrolling="no"
+                                        marginHeight="0"
+                                        marginWidth="0"
+                                        src={`https://www.openstreetmap.org/export/embed.html?${(() => {
+                                            const params = new URLSearchParams();
+                                            const restaurantLat = 45.187722378759446;
+                                            const restaurantLng = 9.14502413953518;
+                                            const customerLat = selectedOrder.address?.latitude || 45.1847;
+                                            const customerLng = selectedOrder.address?.longitude || 9.1562;
+                                            const driverLat = driverLocation?.latitude || customerLat;
+                                            const driverLng = driverLocation?.longitude || customerLng;
+
+                                            const minLat = Math.min(restaurantLat, customerLat, driverLat) - 0.01;
+                                            const maxLat = Math.max(restaurantLat, customerLat, driverLat) + 0.01;
+                                            const minLng = Math.min(restaurantLng, customerLng, driverLng) - 0.01;
+                                            const maxLng = Math.max(restaurantLng, customerLng, driverLng) + 0.01;
+
+                                            params.set('bbox', `${minLng},${minLat},${maxLng},${maxLat}`);
+                                            params.set('layer', 'mapnik');
+                                            return params.toString();
+                                        })()}`}
+                                        style={{ border: 0 }}
+                                    />
+                                    <div className="absolute bottom-2 left-2 bg-white px-3 py-2 rounded shadow text-xs">
+                                        <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>Restaurant
+                                        <span className="inline-block w-3 h-3 rounded-full bg-blue-500 ml-2 mr-1"></span>Customer
+                                        {driverLocation && (
+                                            <React.Fragment>
+                                                <span className="inline-block w-3 h-3 rounded-full bg-green-500 ml-2 mr-1"></span>Driver
+                                            </React.Fragment>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Additional Information */}
                         <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: colors.background }}>
                             <div className="grid grid-cols-2 gap-4">
@@ -638,8 +728,8 @@ function OrderList() {
                                 <div>
                                     <p className="text-sm" style={{ color: colors.textMuted }}>{t('deliverySlot') || 'Delivery Slot'}</p>
                                     <p className="font-medium" style={{ color: colors.text }}>
-                                        {selectedOrder.delivery_time ? 
-                                            new Date(selectedOrder.delivery_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 
+                                        {selectedOrder.delivery_time ?
+                                            new Date(selectedOrder.delivery_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
                                             'ASAP'}
                                     </p>
                                 </div>
