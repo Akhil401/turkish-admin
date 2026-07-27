@@ -94,7 +94,7 @@ function UserList() {
             });
         } catch (error) {
             console.error('Error fetching users:', error);
-            toast.error('Failed to load customers');
+            toast.error('Impossibile caricare i clienti');
         } finally {
             setLoading(false);
         }
@@ -102,7 +102,7 @@ function UserList() {
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleDateString('en-US', {
+        return new Date(dateString).toLocaleDateString('it-IT', {
             year: 'numeric',
             month: 'short',
             day: 'numeric'
@@ -128,10 +128,10 @@ function UserList() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold" style={{ color: colors.text }}>
-                        Customers
+                        Clienti
                     </h1>
                     <p style={{ color: colors.textMuted }}>
-                        {filteredUsers.length} customers registered
+                        {filteredUsers.length} clienti registrati
                     </p>
                 </div>
             </div>
@@ -153,7 +153,7 @@ function UserList() {
                             <p className="text-2xl font-bold" style={{ color: colors.text }}>
                                 {stats.total}
                             </p>
-                            <p style={{ color: colors.textMuted }}>Total Customers</p>
+                            <p style={{ color: colors.textMuted }}>Clienti Totali</p>
                         </div>
                     </div>
                 </div>
@@ -173,7 +173,7 @@ function UserList() {
                             <p className="text-2xl font-bold" style={{ color: colors.text }}>
                                 {stats.withPhone}
                             </p>
-                            <p style={{ color: colors.textMuted }}>With Phone Number</p>
+                            <p style={{ color: colors.textMuted }}>Con Numero di Telefono</p>
                         </div>
                     </div>
                 </div>
@@ -193,7 +193,7 @@ function UserList() {
                             <p className="text-2xl font-bold" style={{ color: colors.text }}>
                                 {stats.newThisMonth}
                             </p>
-                            <p style={{ color: colors.textMuted }}>New This Month</p>
+                            <p style={{ color: colors.textMuted }}>Nuovi Questo Mese</p>
                         </div>
                     </div>
                 </div>
@@ -210,7 +210,7 @@ function UserList() {
                     </div>
                     <input
                         type="text"
-                        placeholder="Search by name, email, or phone..."
+                        placeholder="Cerca per nome, email o telefono..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-12 pr-4 py-3 rounded-xl border transition-all duration-200 focus:outline-none"
@@ -235,10 +235,10 @@ function UserList() {
                         <Icons.User />
                     </div>
                     <h3 className="text-xl font-semibold mb-2" style={{ color: colors.text }}>
-                        No customers found
+                        Nessun cliente trovato
                     </h3>
                     <p style={{ color: colors.textMuted }}>
-                        {searchTerm ? 'Try adjusting your search' : 'No customers registered yet'}
+                        {searchTerm ? 'Prova a modificare la ricerca' : 'Nessun cliente registrato'}
                     </p>
                 </div>
             ) : (
@@ -262,10 +262,10 @@ function UserList() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-bold truncate" style={{ color: colors.text }}>
-                                        {user.full_name || 'Unknown'}
+                                        {user.full_name || 'Sconosciuto'}
                                     </h3>
                                     <p className="text-sm" style={{ color: colors.textMuted }}>
-                                        Customer
+                                        Cliente
                                     </p>
                                 </div>
                             </div>
@@ -286,7 +286,7 @@ function UserList() {
                                 )}
                                 <div className="flex items-center gap-3 text-sm" style={{ color: colors.textMuted }}>
                                     <Icons.Calendar />
-                                    <span>Joined {formatDate(user.created_at)}</span>
+                                    <span>Registrato {formatDate(user.created_at)}</span>
                                 </div>
                             </div>
                         </div>

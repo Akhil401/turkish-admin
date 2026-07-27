@@ -237,7 +237,7 @@ function OrderList() {
                 return;
             }
 
-            toast.success(`${t('orderStatusUpdated')} ${newStatus}`);
+            toast.success(`${t('orderStatusUpdated')} ${t(newStatus)}`);
 
             // Update local state
             setOrders(orders.map(order =>
@@ -334,7 +334,7 @@ function OrderList() {
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleDateString('en-US', {
+        return new Date(dateString).toLocaleDateString('it-IT', {
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
@@ -376,7 +376,7 @@ function OrderList() {
                         color: getStatusColor(order.status)
                     }}
                 >
-                    {order.status}
+                    {t(order.status)}
                 </span>
             </div>
 
@@ -543,7 +543,7 @@ function OrderList() {
                         <div className="flex items-center justify-between mb-6 pb-4 border-b" style={{ borderColor: colors.borderLight }}>
                             <div>
                                 <h2 className="text-2xl font-bold" style={{ color: colors.text }}>
-                                    Order #{selectedOrder.id.slice(-8).toUpperCase()}
+                                    Ordine #{selectedOrder.id.slice(-8).toUpperCase()}
                                 </h2>
                                 <p className="text-sm" style={{ color: colors.textMuted }}>
                                     {formatDate(selectedOrder.created_at)}
@@ -557,7 +557,7 @@ function OrderList() {
                                         color: getStatusColor(selectedOrder.status)
                                     }}
                                 >
-                                    {selectedOrder.status}
+                                    {t(selectedOrder.status)}
                                 </span>
                                 <button
                                     onClick={closeOrderDetail}
@@ -588,7 +588,7 @@ function OrderList() {
                                     }}
                                 >
                                     <Icons.Message />
-                                    {t('messageCustomer') || 'Message Customer'}
+                                    {t('messageCustomer') || 'Messaggia Cliente'}
                                 </button>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -627,15 +627,15 @@ function OrderList() {
                         <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: colors.background }}>
                             <div className="flex items-center justify-between mb-3">
                                 <h3 className="font-semibold" style={{ color: colors.text }}>
-                                    Delivery Information
+                                    Informazioni Consegna
                                 </h3>
                             </div>
                             {selectedOrder.driver_id ? (
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm" style={{ color: colors.textMuted }}>Assigned Driver</p>
+                                        <p className="text-sm" style={{ color: colors.textMuted }}>Autista Assegnato</p>
                                         <p className="font-medium" style={{ color: colors.text }}>
-                                            {selectedOrder.driver?.full_name || 'Unknown Driver'}
+                                            {selectedOrder.driver?.full_name || 'Autista Sconosciuto'}
                                         </p>
                                     </div>
                                     <button
@@ -649,14 +649,14 @@ function OrderList() {
                                         }}
                                     >
                                         <Icons.Message />
-                                        Message Driver
+                                        Messaggia Autista
                                     </button>
                                 </div>
                             ) : (
                                 <div>
-                                    <p className="text-sm" style={{ color: colors.textMuted }}>Assigned Driver</p>
+                                    <p className="text-sm" style={{ color: colors.textMuted }}>Autista Assegnato</p>
                                     <p className="font-medium" style={{ color: colors.status?.rejected || '#ef4444' }}>
-                                        Driver is not yet assigned
+                                        Autista non ancora assegnato
                                     </p>
                                 </div>
                             )}
@@ -667,11 +667,11 @@ function OrderList() {
                             <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: colors.background }}>
                                 <div className="flex items-center justify-between mb-3">
                                     <h3 className="font-semibold" style={{ color: colors.text }}>
-                                        Live Tracking
+                                        Tracciamento in Tempo Reale
                                     </h3>
                                     {driverLocation && (
                                         <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-600">
-                                            ● Live
+                                            ● In diretta
                                         </span>
                                     )}
                                 </div>
@@ -704,11 +704,11 @@ function OrderList() {
                                         style={{ border: 0 }}
                                     />
                                     <div className="absolute bottom-2 left-2 bg-white px-3 py-2 rounded shadow text-xs">
-                                        <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>Restaurant
-                                        <span className="inline-block w-3 h-3 rounded-full bg-blue-500 ml-2 mr-1"></span>Customer
+                                        <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>Ristorante
+                                        <span className="inline-block w-3 h-3 rounded-full bg-blue-500 ml-2 mr-1"></span>Cliente
                                         {driverLocation && (
                                             <React.Fragment>
-                                                <span className="inline-block w-3 h-3 rounded-full bg-green-500 ml-2 mr-1"></span>Driver
+                                                <span className="inline-block w-3 h-3 rounded-full bg-green-500 ml-2 mr-1"></span>Autista
                                             </React.Fragment>
                                         )}
                                     </div>
@@ -720,22 +720,22 @@ function OrderList() {
                         <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: colors.background }}>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-sm" style={{ color: colors.textMuted }}>{t('paymentMethod') || 'Payment Method'}</p>
+                                    <p className="text-sm" style={{ color: colors.textMuted }}>{t('paymentMethod') || 'Metodo di Pagamento'}</p>
                                     <p className="font-medium" style={{ color: colors.text }}>
-                                        {selectedOrder.payment_method === 'card' ? '💳 Card' : '💵 Cash on Delivery'}
+                                        {selectedOrder.payment_method === 'card' ? '💳 Carta' : '💵 Contanti alla Consegna'}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm" style={{ color: colors.textMuted }}>{t('deliverySlot') || 'Delivery Slot'}</p>
+                                    <p className="text-sm" style={{ color: colors.textMuted }}>{t('deliverySlot') || 'Orario di Consegna'}</p>
                                     <p className="font-medium" style={{ color: colors.text }}>
                                         {selectedOrder.delivery_time ?
                                             new Date(selectedOrder.delivery_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
-                                            'ASAP'}
+                                            'Il prima possibile'}
                                     </p>
                                 </div>
                                 {selectedOrder.allergy_comments && (
                                     <div className="col-span-2 mt-2 p-3 rounded-lg border-l-4 border-red-500 bg-red-50">
-                                        <p className="text-xs font-bold text-red-600 uppercase mb-1">⚠️ Allergy Comments</p>
+                                        <p className="text-xs font-bold text-red-600 uppercase mb-1">⚠️ Note Allergie</p>
                                         <p className="text-sm font-medium text-red-900">
                                             {selectedOrder.allergy_comments}
                                         </p>
@@ -771,7 +771,7 @@ function OrderList() {
                                                         {item.name || item.itemName || t('unknownItem')}
                                                     </p>
                                                     <p className="text-sm" style={{ color: colors.textMuted }}>
-                                                        €{(item.price_at_order || item.price || 0).toFixed(2)} each
+                                                        €{(item.price_at_order || item.price || 0).toFixed(2)} cad.
                                                     </p>
                                                 </div>
                                             </div>

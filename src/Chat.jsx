@@ -221,7 +221,7 @@ export default function Chat() {
           body: JSON.stringify({
             app_id: import.meta.env.VITE_ONESIGNAL_APP_ID,
             include_player_ids: [profile.expo_push_token],
-            headings: { en: "Turkish Kelleci Support" },
+            headings: { en: "Assistenza Turkish Kelleci" },
             contents: { en: messageContent },
           })
         }).catch(err => console.error("Push notification failed:", err));
@@ -288,11 +288,11 @@ export default function Chat() {
         selectedUser ? 'hidden md:flex' : 'flex'
       }`}>
         <div className="p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold mb-3">Chats</h2>
+          <h2 className="text-lg font-semibold mb-3">Chat</h2>
           <div className="relative">
             <input
               type="text"
-              placeholder="Search users..."
+              placeholder="Cerca utenti..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-gray-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
@@ -335,7 +335,7 @@ export default function Chat() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className={`font-semibold truncate ${selectedUser?.id === user.id ? 'text-orange-900' : 'text-gray-900'}`}>
-                    {user.full_name || 'User'}
+                    {user.full_name || 'Utente'}
                   </div>
                   <div className="text-xs text-gray-500 truncate">{user.email}</div>
                 </div>
@@ -351,14 +351,14 @@ export default function Chat() {
               {loadingMore ? (
                 <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
               ) : (
-                'Load More Users'
+                'Carica Altri Utenti'
               )}
             </button>
           )}
           {users.length === 0 && !loadingMore && (
             <div className="p-8 text-gray-500 text-center">
               <div className="mb-2">📭</div>
-              No users found
+              Nessun utente trovato
             </div>
           )}
         </div>
@@ -375,7 +375,7 @@ export default function Chat() {
               <button
                 onClick={() => setSelectedUser(null)}
                 className="md:hidden p-2 -ml-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-                aria-label="Back to chats"
+                aria-label="Torna alle chat"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -392,7 +392,7 @@ export default function Chat() {
 
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold truncate">
-                  Chat with {selectedUser.full_name || 'User'}
+                  Chat con {selectedUser.full_name || 'Utente'}
                 </h2>
                 <p className="text-xs text-gray-500 truncate">{selectedUser.email}</p>
               </div>
@@ -403,7 +403,7 @@ export default function Chat() {
               {messages.map(renderMessage)}
               {messages.length === 0 && (
                 <div className="text-center text-gray-500 mt-10">
-                  Start a conversation
+                  Inizia una conversazione
                 </div>
               )}
             </div>
@@ -416,7 +416,7 @@ export default function Chat() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  placeholder="Type a message..."
+                  placeholder="Scrivi un messaggio..."
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
                 <button
@@ -424,14 +424,14 @@ export default function Chat() {
                   disabled={!newMessage.trim()}
                   className="px-6 py-2 bg-orange-600 text-white rounded-full hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
-                  Send
+                  Invia
                 </button>
               </div>
             </div>
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-500">
-            Select a user to start chatting
+            Seleziona un utente per iniziare a chattare
           </div>
         )}
       </div>

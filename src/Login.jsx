@@ -19,7 +19,7 @@ function Login() {
                 password,
             });
             if (error) throw error;
-            toast.success('Welcome back, Admin!');
+            toast.success('Bentornato, Admin!');
             navigate('/');
         } catch (error) {
             toast.error(error.message);
@@ -53,10 +53,10 @@ function Login() {
                         className="text-2xl font-bold mb-2"
                         style={{ color: colors.text }}
                     >
-                        Admin Portal
+                        Portale Admin
                     </h1>
                     <p style={{ color: colors.textMuted }}>
-                        Turkish Kelleci Management
+                        Gestione Turkish Kelleci
                     </p>
                 </div>
 
@@ -67,7 +67,7 @@ function Login() {
                             className="block text-sm font-medium mb-2"
                             style={{ color: colors.text }}
                         >
-                            Email Address
+                            Indirizzo Email
                         </label>
                         <input
                             type="email"
@@ -146,10 +146,10 @@ function Login() {
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                 </svg>
-                                Signing in...
+                                Accesso in corso...
                             </span>
                         ) : (
-                            'Sign In'
+                            'Accedi'
                         )}
                     </button>
                 </form>
@@ -160,7 +160,7 @@ function Login() {
                         Turkish Kelleci Pizzeria & Grill
                     </p>
                     <p style={{ color: colors.textLight, fontSize: '0.75rem', marginTop: '0.5rem' }}>
-                        Secure Admin Access Only
+                        Accesso Riservato agli Amministratori
                     </p>
                 </div>
             </div>

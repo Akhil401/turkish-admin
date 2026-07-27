@@ -271,10 +271,10 @@ function MenuList() {
                 .getPublicUrl(filePath);
 
             setFormData({ ...formData, imageUrl: publicUrl });
-            toast.success('Image uploaded successfully!');
+            toast.success('Immagine caricata con successo!');
         } catch (error) {
             console.error('Error uploading image:', error);
-            toast.error('Failed to upload image: ' + error.message);
+            toast.error('Caricamento immagine fallito: ' + error.message);
         } finally {
             setUploadingImage(false);
         }
@@ -465,7 +465,7 @@ function MenuList() {
                                         color: item.isAvailable ? colors.success : colors.danger
                                     }}
                                 >
-                                    {item.isAvailable ? 'Available' : 'Unavailable'}
+                                    {item.isAvailable ? 'Disponibile' : 'Non Disponibile'}
                                 </div>
 
                                 {/* Type Badge */}
@@ -489,7 +489,7 @@ function MenuList() {
                                     {item.name}
                                 </h3>
                                 <p className="text-sm mb-3 line-clamp-2" style={{ color: colors.textLight }}>
-                                    {item.description || 'No description'}
+                                    {item.description || 'Nessuna descrizione'}
                                 </p>
 
                                 {/* Price */}
@@ -539,7 +539,7 @@ function MenuList() {
                                             style={{ color: colors.text }}
                                         >
                                             <Icons.Edit />
-                                            Edit
+                                            Modifica
                                         </button>
                                         <button
                                             onClick={() => toggleAvailability(item.id, item.isAvailable)}
@@ -550,7 +550,7 @@ function MenuList() {
                                             }}
                                         >
                                             {item.isAvailable ? <Icons.X /> : <Icons.Check />}
-                                            {item.isAvailable ? 'Unavailable' : 'Available'}
+                                            {item.isAvailable ? 'Non Disponibile' : 'Disponibile'}
                                         </button>
                                     </div>
                                     <button
@@ -559,7 +559,7 @@ function MenuList() {
                                         style={{ backgroundColor: `${colors.danger}15`, color: colors.danger }}
                                     >
                                         <Icons.Trash />
-                                        <span className="sm:hidden ml-1.5 font-bold text-xs">Delete</span>
+                                        <span className="sm:hidden ml-1.5 font-bold text-xs">Elimina</span>
                                     </button>
                                 </div>
                             </div>
@@ -577,7 +577,7 @@ function MenuList() {
                     >
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-2xl font-bold" style={{ color: colors.text }}>
-                                {editingId ? 'Edit Item' : 'Add New Item'}
+                                {editingId ? 'Modifica Articolo' : 'Aggiungi Nuovo'}
                             </h2>
                             <button
                                 onClick={closeModal}
@@ -592,16 +592,16 @@ function MenuList() {
 
                         <div className="space-y-4">
                             <InputField
-                                label="Item Name"
+                                label="Nome Articolo"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                placeholder="e.g., Margherita Pizza"
+                                placeholder="es. Pizza Margherita"
                                 required
                             />
 
                             <div className="grid grid-cols-2 gap-4">
                                 <InputField
-                                    label="Price (€)"
+                                    label="Prezzo (€)"
                                     type="number"
                                     value={formData.price}
                                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
@@ -609,32 +609,32 @@ function MenuList() {
                                     required
                                 />
                                 <InputField
-                                    label="Offer Price (€)"
+                                    label="Prezzo Offerta (€)"
                                     type="number"
                                     value={formData.offerPrice}
                                     onChange={(e) => setFormData({ ...formData, offerPrice: e.target.value })}
-                                    placeholder="Optional"
+                                    placeholder="Opzionale"
                                 />
                             </div>
 
                             <InputField
-                                label="Category/Type"
+                                label="Categoria/Tipo"
                                 value={formData.Type}
                                 onChange={(e) => setFormData({ ...formData, Type: e.target.value })}
-                                placeholder="e.g., Pizza, Burger, Salad"
+                                placeholder="es. Pizza, Burger, Insalata"
                             />
 
                             <TextAreaField
-                                label="Description"
+                                label="Descrizione"
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                placeholder="Describe the item..."
+                                placeholder="Descrivi l'articolo..."
                             />
 
                             {/* Image Upload */}
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium" style={{ color: colors.text }}>
-                                    Item Image
+                                    Immagine Articolo
                                 </label>
 
                                 {/* Preview */}
@@ -642,7 +642,7 @@ function MenuList() {
                                     <div className="relative h-32 rounded-xl overflow-hidden" style={{ backgroundColor: colors.background }}>
                                         <img
                                             src={formData.imageUrl}
-                                            alt="Preview"
+                                            alt="Anteprima"
                                             className="w-full h-full object-cover"
                                         />
                                         <button
@@ -674,7 +674,7 @@ function MenuList() {
                                         {uploadingImage ? (
                                             <>
                                                 <div className="animate-spin rounded-full h-6 w-6 border-b-2" style={{ borderColor: colors.primary }} />
-                                                <span className="text-sm" style={{ color: colors.textMuted }}>Uploading...</span>
+                                                <span className="text-sm" style={{ color: colors.textMuted }}>Caricamento...</span>
                                             </>
                                         ) : (
                                             <>
@@ -682,10 +682,10 @@ function MenuList() {
                                                     <Icons.Upload />
                                                 </div>
                                                 <span className="text-sm font-medium" style={{ color: colors.text }}>
-                                                    Click to upload image
+                                                    Clicca per caricare l'immagine
                                                 </span>
                                                 <span className="text-xs" style={{ color: colors.textMuted }}>
-                                                    PNG, JPG up to 5MB
+                                                    PNG, JPG fino a 5MB
                                                 </span>
                                             </>
                                         )}
@@ -694,7 +694,7 @@ function MenuList() {
 
                                 {/* Manual URL Input as fallback */}
                                 <div className="flex items-center gap-2 pt-2">
-                                    <span className="text-xs" style={{ color: colors.textMuted }}>Or paste URL:</span>
+                                    <span className="text-xs" style={{ color: colors.textMuted }}>Oppure incolla URL:</span>
                                     <input
                                         type="text"
                                         value={formData.imageUrl}
@@ -711,10 +711,10 @@ function MenuList() {
                             </div>
 
                             <InputField
-                                label="Toppings (comma-separated)"
+                                label="Condimenti (separati da virgola)"
                                 value={formData.toppings}
                                 onChange={(e) => setFormData({ ...formData, toppings: e.target.value })}
-                                placeholder="Cheese, Pepperoni, Mushrooms"
+                                placeholder="Formaggio, Peperoni, Funghi"
                             />
 
                             <label className="flex items-center gap-3 p-4 rounded-xl cursor-pointer" style={{ backgroundColor: colors.background }}>
@@ -725,7 +725,7 @@ function MenuList() {
                                     className="w-5 h-5 rounded"
                                     style={{ accentColor: colors.primary }}
                                 />
-                                <span style={{ color: colors.text }}>Item is available for order</span>
+                                <span style={{ color: colors.text }}>Articolo disponibile per l'ordine</span>
                             </label>
 
                             <div className="flex gap-3 pt-4">
@@ -734,7 +734,7 @@ function MenuList() {
                                     className="flex-1 py-3 rounded-xl font-medium transition-all"
                                     style={{ backgroundColor: colors.background, color: colors.text }}
                                 >
-                                    Cancel
+                                    Annulla
                                 </button>
                                 <button
                                     onClick={handleAddOrEdit}
@@ -747,7 +747,7 @@ function MenuList() {
                                     onMouseEnter={(e) => e.target.style.backgroundColor = colors.primaryHover}
                                     onMouseLeave={(e) => e.target.style.backgroundColor = colors.primary}
                                 >
-                                    {editingId ? 'Save Changes' : 'Add Item'}
+                                    {editingId ? 'Salva Modifiche' : 'Aggiungi Articolo'}
                                 </button>
                             </div>
                         </div>

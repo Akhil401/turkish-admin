@@ -176,7 +176,7 @@ function Dashboard() {
         setRecentOrders(recent || []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        toast.error('Failed to load dashboard data');
+        toast.error('Impossibile caricare i dati della dashboard');
       } finally {
         setLoading(false);
       }
@@ -197,28 +197,28 @@ function Dashboard() {
 
   const statCards = [
     {
-      title: 'Active Orders',
+      title: 'Ordini Attivi',
       value: stats.activeOrders,
       icon: Icons.Orders,
       color: colors.primary,
       trend: '+12%'
     },
     {
-      title: 'Total Revenue',
+      title: 'Entrate Totali',
       value: `€${stats.totalRevenue.toFixed(2)}`,
       icon: Icons.Revenue,
       color: colors.success,
       trend: '+8%'
     },
     {
-      title: 'Total Customers',
+      title: 'Clienti Totali',
       value: stats.totalUsers,
       icon: Icons.Users,
       color: colors.info,
       trend: '+5%'
     },
     {
-      title: 'Menu Items',
+      title: 'Articoli Menu',
       value: stats.menuItems,
       icon: Icons.Menu,
       color: colors.warning,
@@ -239,7 +239,7 @@ function Dashboard() {
   };
 
   const getStatusLabel = (status) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
+    return t(status);
   };
 
   const toggleStoreStatus = async () => {
@@ -256,10 +256,10 @@ function Dashboard() {
     
     if (error) {
       console.error('Error toggling store status:', error);
-      toast.error('Failed to update store status: ' + error.message);
+      toast.error('Impossibile aggiornare lo stato del negozio: ' + error.message);
     } else {
       setStoreSettings({ ...storeSettings, is_open: newStatus, manual_override: true });
-      toast.success(newStatus ? 'Restaurant is now OPEN' : 'Restaurant is now CLOSED');
+      toast.success(newStatus ? 'Il ristorante è ora APERTO' : 'Il ristorante è ora CHIUSO');
     }
   };
 
@@ -280,11 +280,11 @@ function Dashboard() {
     
     if (error) {
       console.error('Error saving hours:', error);
-      toast.error('Failed to save hours: ' + error.message);
+      toast.error('Impossibile salvare gli orari: ' + error.message);
     } else {
       setStoreSettings({ ...storeSettings, opening_hours: tempHours });
       setIsEditingHours(false);
-      toast.success('Opening hours updated');
+      toast.success('Orari di apertura aggiornati');
     }
   };
 
@@ -302,11 +302,11 @@ function Dashboard() {
       {isEditingHours && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md space-y-6">
-            <h2 className="text-xl font-bold">Edit Opening Hours</h2>
+            <h2 className="text-xl font-bold">Modifica Orari di Apertura</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-bold text-gray-500 block mb-2 uppercase">Morning Shift</label>
+                <label className="text-sm font-bold text-gray-500 block mb-2 uppercase">Turno Mattina</label>
                 <div className="flex items-center gap-3">
                   <input 
                     type="time" 
@@ -314,7 +314,7 @@ function Dashboard() {
                     value={tempHours.morning.open}
                     onChange={(e) => setTempHours({...tempHours, morning: {...tempHours.morning, open: e.target.value}})}
                   />
-                  <span>to</span>
+                  <span>a</span>
                   <input 
                     type="time" 
                     className="flex-1 p-2 border rounded-lg"
@@ -325,7 +325,7 @@ function Dashboard() {
               </div>
 
               <div>
-                <label className="text-sm font-bold text-gray-500 block mb-2 uppercase">Evening Shift</label>
+                <label className="text-sm font-bold text-gray-500 block mb-2 uppercase">Turno Sera</label>
                 <div className="flex items-center gap-3">
                   <input 
                     type="time" 
@@ -333,7 +333,7 @@ function Dashboard() {
                     value={tempHours.evening.open}
                     onChange={(e) => setTempHours({...tempHours, evening: {...tempHours.evening, open: e.target.value}})}
                   />
-                  <span>to</span>
+                  <span>a</span>
                   <input 
                     type="time" 
                     className="flex-1 p-2 border rounded-lg"
@@ -349,13 +349,13 @@ function Dashboard() {
                 onClick={() => setIsEditingHours(false)}
                 className="flex-1 py-2 px-4 rounded-xl font-bold bg-gray-100 text-gray-600"
               >
-                Cancel
+                Annulla
               </button>
               <button 
                 onClick={saveHours}
                 className="flex-1 py-2 px-4 rounded-xl font-bold bg-orange-500 text-white shadow-lg shadow-orange-200"
               >
-                Save Hours
+                Salva Orari
               </button>
             </div>
           </div>
@@ -366,10 +366,10 @@ function Dashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold" style={{ color: colors.text }}>
-            Dashboard
+            Pannello di Controllo
           </h1>
           <p style={{ color: colors.textMuted }}>
-            Welcome back! Here's what's happening today.
+            Bentornato! Ecco cosa succede oggi.
           </p>
         </div>
 
@@ -386,16 +386,16 @@ function Dashboard() {
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wider" style={{ color: colors.textMuted }}>
-                  Store Status
+                  Stato Negozio
                 </span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 font-bold text-gray-500">
-                  {storeSettings?.manual_override ? 'MANUAL' : 'SCHEDULED'}
+                  {storeSettings?.manual_override ? 'MANUALE' : 'PROGRAMMATO'}
                 </span>
               </div>
               <span className={`text-lg font-black ${
                 (storeSettings?.manual_override ? storeSettings.is_open : isAutoOpen) ? 'text-green-500' : 'text-red-500'
               }`}>
-                {(storeSettings?.manual_override ? storeSettings.is_open : isAutoOpen) ? 'OPEN' : 'CLOSED'}
+                {(storeSettings?.manual_override ? storeSettings.is_open : isAutoOpen) ? 'APERTO' : 'CHIUSO'}
               </span>
             </div>
             
@@ -418,12 +418,12 @@ function Dashboard() {
                       const updated = { ...storeSettings, manual_override: false };
                       setStoreSettings(updated);
                       calculateStatus(updated);
-                      toast.success('Switched to Auto Schedule');
+                      toast.success('Passato alla Programmazione Automatica');
                     }
                   }}
                   className="text-[9px] font-bold text-blue-500 uppercase hover:underline"
                 >
-                  Reset to Auto
+                  Ripristina Automatico
                 </button>
               )}
             </div>
@@ -431,7 +431,7 @@ function Dashboard() {
 
           <div className="pt-2 border-t flex flex-col gap-2" style={{ borderColor: colors.borderLight }}>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase" style={{ color: colors.textMuted }}>Opening Hours</span>
+              <span className="text-[10px] font-bold uppercase" style={{ color: colors.textMuted }}>Orari di Apertura</span>
               <button 
                 onClick={() => {
                   if (storeSettings?.opening_hours) setTempHours(storeSettings.opening_hours);
@@ -439,15 +439,15 @@ function Dashboard() {
                 }}
                 className="text-[10px] font-bold text-orange-500 uppercase hover:underline"
               >
-                Edit Hours
+                Modifica Orari
               </button>
             </div>
             <div className="flex justify-between text-xs font-medium">
               <span style={{ color: colors.text }}>
-                Morning: {storeSettings?.opening_hours?.morning?.open} - {storeSettings?.opening_hours?.morning?.close}
+                Mattina: {storeSettings?.opening_hours?.morning?.open} - {storeSettings?.opening_hours?.morning?.close}
               </span>
               <span style={{ color: colors.text }}>
-                Evening: {storeSettings?.opening_hours?.evening?.open} - {storeSettings?.opening_hours?.evening?.close}
+                Sera: {storeSettings?.opening_hours?.evening?.open} - {storeSettings?.opening_hours?.evening?.close}
               </span>
             </div>
           </div>
@@ -520,14 +520,14 @@ function Dashboard() {
               className="text-xl font-bold"
               style={{ color: colors.text }}
             >
-              Recent Orders
+              Ordini Recenti
             </h2>
             <a
               href="/orders"
               className="text-sm font-medium transition-colors"
               style={{ color: colors.primary }}
             >
-              View All →
+              Vedi Tutti →
             </a>
           </div>
 
@@ -537,7 +537,7 @@ function Dashboard() {
               style={{ backgroundColor: colors.background }}
             >
               <p style={{ color: colors.textMuted }}>
-                No orders yet
+                Nessun ordine ancora
               </p>
             </div>
           ) : (
@@ -563,7 +563,7 @@ function Dashboard() {
                         className="font-semibold"
                         style={{ color: colors.text }}
                       >
-                        Order #{order.id.slice(-8)}
+                        Ordine #{order.id.slice(-8)}
                       </p>
                       <p
                         className="text-sm flex items-center gap-1"
@@ -609,7 +609,7 @@ function Dashboard() {
             className="text-xl font-bold mb-6"
             style={{ color: colors.text }}
           >
-            Order Status
+            Stato Ordini
           </h2>
 
           <div className="space-y-4">
@@ -659,7 +659,7 @@ function Dashboard() {
               className="font-semibold mb-4"
               style={{ color: colors.text }}
             >
-              Quick Actions
+              Azioni Rapide
             </h3>
             <div className="space-y-2">
               <a
@@ -674,7 +674,7 @@ function Dashboard() {
                 }}
               >
                 <span style={{ color: colors.primary }}>+</span>
-                <span style={{ color: colors.text }}>Add Menu Item</span>
+                <span style={{ color: colors.text }}>Aggiungi Piatto</span>
               </a>
               <a
                 href="/orders"
@@ -688,7 +688,7 @@ function Dashboard() {
                 }}
               >
                 <span style={{ color: colors.primary }}>→</span>
-                <span style={{ color: colors.text }}>Manage Orders</span>
+                <span style={{ color: colors.text }}>Gestisci Ordini</span>
               </a>
             </div>
           </div>

@@ -110,6 +110,10 @@ export const translations = {
     loginSuccess: "Logged in successfully",
     loginFailed: "Login failed",
     invalidCredentials: "Invalid email or password",
+    add: "Add",
+    itemDisabled: "Item disabled",
+    invalidFileType: "Invalid file type",
+    unknownItem: "Unknown item",
   },
   it: {
     // Layout / Navigation
@@ -222,6 +226,10 @@ export const translations = {
     loginSuccess: "Accesso effettuato con successo",
     loginFailed: "Accesso fallito",
     invalidCredentials: "Email o password non validi",
+    add: "Aggiungi",
+    itemDisabled: "Articolo disattivato",
+    invalidFileType: "Tipo di file non valido",
+    unknownItem: "Articolo sconosciuto",
   },
 };
 

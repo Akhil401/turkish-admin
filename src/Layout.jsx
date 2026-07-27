@@ -117,20 +117,20 @@ function Layout({ children }) {
                 const newNotif = {
                     id: `order-${payload.new.id}-${Date.now()}`,
                     type: 'order',
-                    title: 'New Order Received',
-                    message: `Order #${payload.new.id.slice(-6).toUpperCase()} has been placed.`,
+                    title: 'Nuovo Ordine Ricevuto',
+                    message: `Ordine #${payload.new.id.slice(-6).toUpperCase()} è stato inserito.`,
                     timestamp: new Date().toISOString(),
                     read: false,
                     path: '/orders'
                 };
                 setNotifications(prev => [newNotif, ...prev].slice(0, 20));
 
-                toast.success(t('orderStatusUpdated') || 'New Order Received!', {
+                toast.success(t('orderStatusUpdated') || 'Nuovo Ordine Ricevuto!', {
                     duration: 6000,
                     icon: '🍕',
                     id: `order-${payload.new.id}`,
                     action: {
-                        label: 'View',
+                        label: 'Visualizza',
                         onClick: () => navigate('/orders')
                     }
                 });
@@ -150,20 +150,20 @@ function Layout({ children }) {
                     const newNotif = {
                         id: `msg-${payload.new.id}-${Date.now()}`,
                         type: 'message',
-                        title: 'New Message',
-                        message: payload.new.content || 'You have a new message.',
+                        title: 'Nuovo Messaggio',
+                        message: payload.new.content || 'Hai un nuovo messaggio.',
                         timestamp: new Date().toISOString(),
                         read: false,
                         path: `/chat?userId=${payload.new.sender_id}`
                     };
                     setNotifications(prev => [newNotif, ...prev].slice(0, 20));
 
-                    toast('New message received!', {
+                    toast('Nuovo messaggio ricevuto!', {
                         duration: 5000,
                         icon: '💬',
                         id: `msg-${payload.new.id}`,
                         action: {
-                            label: 'View',
+                            label: 'Visualizza',
                             onClick: () => navigate(`/chat?userId=${payload.new.sender_id}`)
                         }
                     });
@@ -322,7 +322,7 @@ function Layout({ children }) {
                             {profile?.avatar_url ? (
                                 <img
                                     src={profile.avatar_url}
-                                    alt="Admin Avatar"
+                                    alt="Avatar Admin"
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
@@ -382,7 +382,7 @@ function Layout({ children }) {
                             <Icons.MenuBars />
                         </button>
                         <p style={{ color: colors.textMuted }} className="text-sm hidden sm:block">
-                            {currentTime.toLocaleDateString('en-US', {
+                            {currentTime.toLocaleDateString('it-IT', {
                                 weekday: 'long',
                                 year: 'numeric',
                                 month: 'long',
@@ -438,14 +438,14 @@ function Layout({ children }) {
                                     {/* Header */}
                                     <div className="p-4 border-b flex flex-col gap-3" style={{ borderColor: colors.borderLight }}>
                                         <div className="flex items-center justify-between">
-                                            <h3 className="font-bold" style={{ color: colors.text }}>Notifications</h3>
+                                            <h3 className="font-bold" style={{ color: colors.text }}>Notifiche</h3>
                                             {notifications.length > 0 && (
                                                 <button
                                                     onClick={markAllAsRead}
                                                     className="text-xs font-medium hover:underline"
                                                     style={{ color: colors.primary }}
                                                 >
-                                                    Mark all as read
+                                                    Segna tutte come lette
                                                 </button>
                                             )}
                                         </div>
@@ -455,7 +455,7 @@ function Layout({ children }) {
                                             onClick={async () => {
                                                 const ok = await initAudio();
                                                 if (ok) playNotificationSound(true);
-                                                else toast.error("Could not wake audio engine");
+                                                else toast.error("Impossibile attivare l'audio");
                                             }}
                                             className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-95"
                                             style={{
@@ -465,7 +465,7 @@ function Layout({ children }) {
                                             }}
                                         >
                                             <span className="text-xl">🔊</span>
-                                            Enable Audio Notifications
+                                            Attiva Notifiche Audio
                                         </button>
                                     </div>
 
@@ -473,7 +473,7 @@ function Layout({ children }) {
                                     <div className="flex-1 overflow-y-auto scrollbar-hide">
                                         {notifications.length === 0 ? (
                                             <div className="p-8 text-center">
-                                                <p className="text-sm" style={{ color: colors.textMuted }}>No notifications yet</p>
+                                                <p className="text-sm" style={{ color: colors.textMuted }}>Nessuna notifica</p>
                                             </div>
                                         ) : (
                                             notifications.map((notif) => (
@@ -528,7 +528,7 @@ function Layout({ children }) {
                                                 className="text-xs font-medium"
                                                 style={{ color: colors.textMuted }}
                                             >
-                                                Clear All
+                                                Cancella Tutto
                                             </button>
                                         </div>
                                     )}
