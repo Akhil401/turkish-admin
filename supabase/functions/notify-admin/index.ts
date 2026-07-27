@@ -40,7 +40,7 @@ serve(async (req) => {
       url = `https://turkish-admin.pages.dev/chat?userId=${record.sender_id}`;
     } else if (table === 'orders') {
       title = '🍕 New Order Received!';
-      body = `Order #${record.id.slice(-6).toUpperCase()} - Total: $${record.total_amount}`;
+      body = `Order #${record.id.slice(-6).toUpperCase()} - Total: €${record.total}`;
       url = 'https://turkish-admin.pages.dev/orders';
       
       // For orders, we find the first available push subscription (admin)

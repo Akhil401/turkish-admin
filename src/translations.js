@@ -14,7 +14,7 @@ export const translations = {
     accepted: "Accepted",
     preparing: "Preparing",
     ready: "Ready for Pickup",
-    sent: "Sent",
+    out_for_delivery: "Out for Delivery",
     delivered: "Delivered",
     rejected: "Rejected",
 
@@ -126,7 +126,7 @@ export const translations = {
     accepted: "Accettato",
     preparing: "In Preparazione",
     ready: "Pronto per il Ritiro",
-    sent: "Inviato",
+    out_for_delivery: "In Consegna",
     delivered: "Consegnato",
     rejected: "Rifiutato",
 

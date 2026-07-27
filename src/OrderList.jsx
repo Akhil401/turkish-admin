@@ -141,7 +141,7 @@ function OrderList() {
         { value: 'accepted', label: t('accepted'), color: colors.status.accepted },
         { value: 'preparing', label: t('preparing'), color: colors.status.preparing },
         { value: 'ready', label: t('ready'), color: colors.status.ready },
-        { value: 'sent', label: t('sent'), color: colors.status.sent },
+        { value: 'out_for_delivery', label: t('out_for_delivery'), color: colors.status.out_for_delivery },
         { value: 'delivered', label: t('delivered'), color: colors.status.delivered },
         { value: 'rejected', label: t('rejected'), color: colors.status.rejected }
     ];
@@ -325,7 +325,7 @@ function OrderList() {
             accepted: colors.status.accepted,
             preparing: colors.status.preparing,
             ready: colors.status.ready,
-            sent: colors.status.sent,
+            out_for_delivery: colors.status.out_for_delivery,
             delivered: colors.status.delivered,
             rejected: colors.status.rejected
         };

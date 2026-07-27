@@ -117,11 +117,12 @@ function Dashboard() {
           .select('*')
           .not('status', 'in', '("delivered","rejected")');
 
-        // Fetch delivered orders for revenue (delivered and rejected = paid orders)
+        // Revenue = delivered orders only. Rejected/cancelled orders are NOT
+        // revenue and must never be summed here.
         const { data: paidOrders, error: revenueError } = await supabase
           .from('orders')
           .select('total, status')
-          .in('status', ['delivered', 'rejected']);
+          .eq('status', 'delivered');
 
         if (revenueError) {
           console.error('Revenue fetch error:', revenueError);
@@ -230,7 +231,7 @@ function Dashboard() {
       placed: colors.status.placed,
       accepted: colors.status.accepted,
       preparing: colors.status.preparing,
-      sent: colors.status.sent,
+      out_for_delivery: colors.status.out_for_delivery,
       delivered: colors.status.delivered,
       rejected: colors.status.rejected
     };
