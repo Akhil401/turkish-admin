@@ -203,30 +203,9 @@ export default function Chat() {
       content: messageContent,
     });
 
-    if (!error) {
-      // Send background Push Notification via OneSignal REST API
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('expo_push_token')
-        .eq('id', selectedUser.id)
-        .single();
-
-      if (profile?.expo_push_token) {
-        fetch("https://onesignal.com/api/v1/notifications", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Basic ${import.meta.env.VITE_ONESIGNAL_REST_KEY}`
-          },
-          body: JSON.stringify({
-            app_id: import.meta.env.VITE_ONESIGNAL_APP_ID,
-            include_player_ids: [profile.expo_push_token],
-            headings: { en: "Assistenza Turkish Kelleci" },
-            contents: { en: messageContent },
-          })
-        }).catch(err => console.error("Push notification failed:", err));
-      }
-    } else {
+    // The push notification is sent server-side: the messages insert trigger
+    // calls the message-notify edge function (no OneSignal key in the browser).
+    if (error) {
       console.error('Error sending message:', error);
       // Remove the temp message if there was an error
       setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));

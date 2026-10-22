@@ -10,6 +10,7 @@ export const translations = {
     adminUser: "Admin User",
 
     // Order Status
+    pending_payment: "Awaiting payment",
     placed: "Placed",
     accepted: "Accepted",
     preparing: "Preparing",
@@ -126,6 +127,7 @@ export const translations = {
     adminUser: "Admin",
 
     // Order Status
+    pending_payment: "In attesa di pagamento",
     placed: "Inserito",
     accepted: "Accettato",
     preparing: "In Preparazione",

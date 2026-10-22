@@ -108,7 +108,7 @@ const StatusDropdown = ({ orderId, currentStatus, onUpdate, statusOptions, color
             }}
         >
             {statusOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>
+                <option key={opt.value} value={opt.value} disabled={opt.selectable === false}>
                     {opt.label}
                 </option>
             ))}
@@ -136,7 +136,10 @@ function OrderList() {
     const [loading, setLoading] = useState(true);
     const [driverLocation, setDriverLocation] = useState(null);
 
+    // pending_payment is display/filter only: the server sets it (card orders) and
+    // payment-webhook moves it to 'placed'; the admin cannot choose it.
     const statusOptions = [
+        { value: 'pending_payment', label: t('pending_payment'), color: colors.status.pending_payment, selectable: false },
         { value: 'placed', label: t('placed'), color: colors.status.placed },
         { value: 'accepted', label: t('accepted'), color: colors.status.accepted },
         { value: 'preparing', label: t('preparing'), color: colors.status.preparing },
@@ -321,6 +324,7 @@ function OrderList() {
 
     const getStatusColor = (status) => {
         const statusColors = {
+            pending_payment: colors.status.pending_payment,
             placed: colors.status.placed,
             accepted: colors.status.accepted,
             preparing: colors.status.preparing,
@@ -685,8 +689,8 @@ function OrderList() {
                                         marginWidth="0"
                                         src={`https://www.openstreetmap.org/export/embed.html?${(() => {
                                             const params = new URLSearchParams();
-                                            const restaurantLat = 45.187722378759446;
-                                            const restaurantLng = 9.14502413953518;
+                                            const restaurantLat = 45.1875863;
+                                            const restaurantLng = 9.1450456;
                                             const customerLat = selectedOrder.address?.latitude || 45.1847;
                                             const customerLng = selectedOrder.address?.longitude || 9.1562;
                                             const driverLat = driverLocation?.latitude || customerLat;
@@ -818,7 +822,7 @@ function OrderList() {
                                     }}
                                 >
                                     {statusOptions.map(opt => (
-                                        <option key={opt.value} value={opt.value}>
+                                        <option key={opt.value} value={opt.value} disabled={opt.selectable === false}>
                                             {opt.label}
                                         </option>
                                     ))}

@@ -108,32 +108,53 @@ function Layout({ children }) {
         if (!user) return;
 
         // 1. Listen for New Orders
+        // Unpaid card orders ('pending_payment') do not alert. They alert once
+        // payment-webhook moves them to 'placed' (UPDATE event below). Realtime
+        // UPDATE payloads carry no old status, so remember the pending ids seen here.
+        const pendingPaymentIds = new Set();
+        const alertNewOrder = (payload) => {
+            playNotificationSound();
+
+            const newNotif = {
+                id: `order-${payload.new.id}-${Date.now()}`,
+                type: 'order',
+                title: 'Nuovo Ordine Ricevuto',
+                message: `Ordine #${payload.new.id.slice(-6).toUpperCase()} è stato inserito.`,
+                timestamp: new Date().toISOString(),
+                read: false,
+                path: '/orders'
+            };
+            setNotifications(prev => [newNotif, ...prev].slice(0, 20));
+
+            toast.success(t('orderStatusUpdated') || 'Nuovo Ordine Ricevuto!', {
+                duration: 6000,
+                icon: '🍕',
+                id: `order-${payload.new.id}`,
+                action: {
+                    label: 'Visualizza',
+                    onClick: () => navigate('/orders')
+                }
+            });
+        };
         const ordersChannel = supabase
             .channel('global-orders')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
                 console.log('Realtime Order Event:', payload);
-                playNotificationSound();
-
-                const newNotif = {
-                    id: `order-${payload.new.id}-${Date.now()}`,
-                    type: 'order',
-                    title: 'Nuovo Ordine Ricevuto',
-                    message: `Ordine #${payload.new.id.slice(-6).toUpperCase()} è stato inserito.`,
-                    timestamp: new Date().toISOString(),
-                    read: false,
-                    path: '/orders'
-                };
-                setNotifications(prev => [newNotif, ...prev].slice(0, 20));
-
-                toast.success(t('orderStatusUpdated') || 'Nuovo Ordine Ricevuto!', {
-                    duration: 6000,
-                    icon: '🍕',
-                    id: `order-${payload.new.id}`,
-                    action: {
-                        label: 'Visualizza',
-                        onClick: () => navigate('/orders')
-                    }
-                });
+                if (payload.new?.status === 'pending_payment') {
+                    pendingPaymentIds.add(payload.new.id);
+                    return;
+                }
+                alertNewOrder(payload);
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
+                const id = payload.new?.id;
+                if (!id || !pendingPaymentIds.has(id)) return;
+                if (payload.new.status === 'pending_payment') return;
+                pendingPaymentIds.delete(id);
+                if (payload.new.status === 'placed') {
+                    console.log('Realtime Order Paid Event:', payload);
+                    alertNewOrder(payload);
+                }
             })
             .subscribe();
 

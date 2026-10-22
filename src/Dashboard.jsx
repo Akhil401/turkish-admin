@@ -228,6 +228,7 @@ function Dashboard() {
 
   const getStatusColor = (status) => {
     const statusColors = {
+      pending_payment: colors.status.pending_payment,
       placed: colors.status.placed,
       accepted: colors.status.accepted,
       preparing: colors.status.preparing,

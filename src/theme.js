@@ -28,6 +28,7 @@ export const colors = {
 
   // Status indicators
   status: {
+    pending_payment: "#8e44ad",
     placed: "#95a5a6",
     accepted: "#3498db",
     preparing: "#f39c12",

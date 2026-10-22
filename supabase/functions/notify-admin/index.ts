@@ -3,24 +3,58 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // @ts-ignore
 import webpush from 'npm:web-push@3.6.7';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Called by a Database Webhook (Dashboard -> Database -> Webhooks) on messages / orders.
+// The webhook must send the HTTP header `x-webhook-secret` = edge-function secret
+// WEBHOOK_SECRET. The row is re-read with the service role; only table + id are trusted.
+
+const encoder = new TextEncoder();
+
+const jsonResponse = (body: unknown, status: number) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+// Constant-time comparison: hash both values (fixed length) and compare every byte.
+async function safeEqual(a: string, b: string): Promise<boolean> {
+  const [ha, hb] = await Promise.all([
+    crypto.subtle.digest('SHA-256', encoder.encode(a)),
+    crypto.subtle.digest('SHA-256', encoder.encode(b)),
+  ]);
+  const va = new Uint8Array(ha);
+  const vb = new Uint8Array(hb);
+  let diff = 0;
+  for (let i = 0; i < va.length; i++) {
+    diff |= va[i] ^ vb[i];
+  }
+  return diff === 0;
+}
+
+async function checkWebhookSecret(req: Request): Promise<Response | null> {
+  const expected = Deno.env.get('WEBHOOK_SECRET');
+  if (!expected) {
+    console.error('WEBHOOK_SECRET is not set - rejecting request. Set it with: supabase secrets set WEBHOOK_SECRET=<value>');
+    return jsonResponse({ error: 'Server misconfigured' }, 500);
+  }
+  const provided = req.headers.get('x-webhook-secret') ?? '';
+  if (!provided || !(await safeEqual(provided, expected))) {
+    console.warn('Rejected request with a missing or invalid x-webhook-secret header');
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+  return null;
+}
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const denied = await checkWebhookSecret(req);
+  if (denied) return denied;
 
   try {
     const payload = await req.json();
-    console.log('Webhook payload received:', JSON.stringify(payload));
+    const table = payload?.table;
+    const recordId = payload?.record?.id;
+    console.log('Webhook received:', table, recordId);
 
-    const record = payload.record;
-    const table = payload.table;
-
-    if (!record) {
+    if (!recordId || (table !== 'messages' && table !== 'orders')) {
       return new Response('No record in payload', { status: 200 });
     }
 
@@ -32,41 +66,57 @@ serve(async (req) => {
     let title = '';
     let body = '';
     let url = 'https://turkish-admin.pages.dev/';
-    let targetUserId = record.receiver_id;
+    let targetUserIds: string[] = [];
 
     if (table === 'messages') {
-      title = '💬 New Message';
-      body = record.content || 'You have a new message.';
-      url = `https://turkish-admin.pages.dev/chat?userId=${record.sender_id}`;
-    } else if (table === 'orders') {
-      title = '🍕 New Order Received!';
-      body = `Order #${record.id.slice(-6).toUpperCase()} - Total: €${record.total}`;
-      url = 'https://turkish-admin.pages.dev/orders';
-      
-      // For orders, we find the first available push subscription (admin)
-      if (!targetUserId) {
-        const { data: adminSub } = await supabase
-          .from('push_subscriptions')
-          .select('user_id')
-          .limit(1)
-          .single();
-        targetUserId = adminSub?.user_id;
+      const { data: message } = await supabase
+        .from('messages')
+        .select('id, sender_id, receiver_id, content')
+        .eq('id', recordId)
+        .maybeSingle();
+      if (!message?.receiver_id) {
+        return new Response('Message not found', { status: 200 });
       }
+      const text = (message.content || '').trim();
+      title = '💬 New Message';
+      body = (text.length > 180 ? `${text.slice(0, 180)}…` : text) || 'You have a new message.';
+      url = `https://turkish-admin.pages.dev/chat?userId=${encodeURIComponent(message.sender_id)}`;
+      targetUserIds = [message.receiver_id];
+    } else {
+      const { data: order } = await supabase
+        .from('orders')
+        .select('id, total, status')
+        .eq('id', recordId)
+        .maybeSingle();
+      if (!order) {
+        return new Response('Order not found', { status: 200 });
+      }
+      const total = Number(order.total ?? 0).toFixed(2);
+      const awaiting = order.status === 'pending_payment' ? ' (awaiting card payment)' : '';
+      title = '🍕 New Order Received!';
+      body = `Order #${String(order.id).slice(-6).toUpperCase()} - Total: €${total}${awaiting}`;
+      url = 'https://turkish-admin.pages.dev/orders';
+
+      // For orders, notify the admins that have a push subscription
+      const { data: admins } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'admin');
+      targetUserIds = (admins || []).map((a) => a.id);
     }
 
-    if (!targetUserId) {
+    if (targetUserIds.length === 0) {
       return new Response('No target user found for notification', { status: 200 });
     }
 
-    // Look up the push subscription
-    const { data: subData, error: subError } = await supabase
+    // Look up the push subscriptions
+    const { data: subs, error: subError } = await supabase
       .from('push_subscriptions')
-      .select('endpoint, p256dh, auth')
-      .eq('user_id', targetUserId)
-      .single();
+      .select('user_id, endpoint, p256dh, auth')
+      .in('user_id', targetUserIds);
 
-    if (subError || !subData?.endpoint) {
-      console.log('No push subscription found for user:', targetUserId);
+    if (subError || !subs || subs.length === 0) {
+      console.log('No push subscription found for users:', targetUserIds);
       return new Response('No push subscription found', { status: 200 });
     }
 
@@ -77,28 +127,26 @@ serve(async (req) => {
       Deno.env.get('VAPID_PRIVATE_KEY')!
     );
 
-    const pushSubscription = {
-      endpoint: subData.endpoint,
-      keys: {
-        p256dh: subData.p256dh,
-        auth: subData.auth,
-      },
-    };
-
     const notificationPayload = JSON.stringify({ title, body, url });
 
-    await webpush.sendNotification(pushSubscription, notificationPayload);
+    let sent = 0;
+    for (const sub of subs) {
+      if (!sub.endpoint) continue;
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          notificationPayload
+        );
+        sent++;
+      } catch (pushError) {
+        console.error('Push failed for user', sub.user_id, pushError);
+      }
+    }
 
-    console.log(`✅ Push notification sent successfully for ${table}`);
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.log(`✅ ${sent} push notification(s) sent for ${table}`);
+    return jsonResponse({ success: true, sent }, 200);
   } catch (error) {
     console.error('Error in notify-admin function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: (error as Error).message }, 500);
   }
 });
