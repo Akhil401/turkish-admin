@@ -19,6 +19,12 @@ function Login() {
                 password,
             });
             if (error) throw error;
+            // Only accounts with profiles.role = 'admin' may use the panel.
+            const { data: admin, error: roleError } = await supabase.rpc('is_admin');
+            if (roleError || admin !== true) {
+                await supabase.auth.signOut();
+                throw new Error('Questo account non è un amministratore. / This account is not an admin.');
+            }
             toast.success('Bentornato, Admin!');
             navigate('/');
         } catch (error) {
